@@ -10,7 +10,17 @@
 
     include_once 'cekLogin.php';
 
-    $sql = "SELECT anggota.*, fraksi.name AS fraksi, COUNT(vote.id) AS vote_all FROM vote INNER JOIN anggota ON vote.id_anggota = anggota.id INNER JOIN fraksi ON anggota.fraksi_id = fraksi.id GROUP BY id_anggota ORDER BY vote_all DESC";
+    $sql = "SELECT anggota.*, fraksi.name AS fraksi, COUNT(vote.id) AS vote_all FROM vote INNER JOIN anggota ON vote.id_anggota = anggota.id INNER JOIN fraksi ON anggota.fraksi_id = fraksi.id";
+    
+    if (isset($_GET['k'])) {
+      if (isset($_GET['by']) && $_GET['by'] != '') {
+        $sql .= " WHERE anggota.". $_GET['by'] ." LIKE '%". $_GET['k'] ."%'";
+      }else {
+        $sql .= " WHERE anggota.name LIKE '%". $_GET['k'] ."%'";
+      }
+    }
+
+    $sql .= " GROUP BY id_anggota ORDER BY vote_all DESC";
     $query = mysqli_query($conn, $sql);
     $data = mysqli_fetch_assoc($query);
 
@@ -117,11 +127,13 @@
           <form action="">
             <div class="row">
               <div class="col-6">
-                <input type="text" class="form-control">
+                <input type="text" name="k" class="form-control">
               </div>
               <div class="col-4">
-                <select name="" id="" class="form-control">
-                  <option value="">tess</option>
+                <select name="by" id="" class="form-control">
+                  <option value="name">Nama</option>
+                  <option value="birthdate">Tanggal Lahir</option>
+                  <option value="created_at">Tanggal Daftar</option>
                 </select>
               </div>
               <div class="col-2">
