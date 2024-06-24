@@ -4,28 +4,34 @@
     
     include_once '../koneksi.php';
 
-    $currPage = "anggota";
-
-    $vote_all = 0;
+    $currPage = "fraksi";
 
     include_once 'cekLogin.php';
 
-    $sql = "SELECT anggota.*, fraksi.name AS fraksi, COUNT(vote.id) AS vote_all FROM vote INNER JOIN anggota ON vote.id_anggota = anggota.id INNER JOIN fraksi ON anggota.fraksi_id = fraksi.id GROUP BY id_anggota ORDER BY vote_all DESC";
+
+    $sql = "SELECT * FROM fraksi";
+
+    if (isset($_GET['k'])) {
+        $k = $_GET['k'];
+        $sql .= " WHERE name LIKE '%{$k}%'";
+    }
+
+    $sql .= " ORDER BY id DESC";
+
+    
+
     $query = mysqli_query($conn, $sql);
     $data = mysqli_fetch_assoc($query);
-
-
 
     if(isset($_POST['submit'])) {
 
         $id = $_POST['id'];
         $name = $_POST['name'];
-        $birthdate = $_POST['birthdate'];
 
-        $sql = "UPDATE anggota SET name = ?, birthdate = ? WHERE id = ?";
+        $sql = "UPDATE fraksi SET name = ? WHERE id = ?";
         
         $stmt = mysqli_prepare($conn, $sql);
-        mysqli_stmt_bind_param($stmt, "ssi", $name, $birthdate, $id);
+        mysqli_stmt_bind_param($stmt, "si", $name, $id);
         mysqli_stmt_execute($stmt);
         
         mysqli_stmt_close($stmt);
@@ -33,9 +39,8 @@
         $sql = "INSERT INTO activity (action, created_at) VALUES (?, ?)";
 
         $data = [
-          'title' => 'Edit Anggota',
+          'title' => 'Edit fraksi',
           'name' => $name,
-          'birthdate' => $birthdate,
         ];
 
         $data = json_encode($data);
@@ -46,7 +51,7 @@
         
         mysqli_stmt_close($stmt);
 
-        header("Location: anggota.php");
+        header("Location: fraksi.php");
 
     }
 ?>
@@ -59,7 +64,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="description" content="">
     <meta name="generator" content="Hugo 0.84.0">
-    <title>Data anggota</title>
+    <title>Data fraksi</title>
 
     <meta name="theme-color" content="#7952b3">
 
@@ -107,25 +112,22 @@
     <?php include_once 'sidebar.php'; ?>
 
     <main class="col-md-9 ms-sm-auto col-lg-10 px-md-4">
-      <div class="pt-3 pb-2 mb-3 border-bottom">
-        <h1 class="h2">Data anggota</h1>
-        <h5>Muncul jika telah di vote</h5>
+      <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
+        <h1 class="h2">Data fraksi</h1>
       </div>  
 
       <div class="card">
         <div class="card-body">
-          <form action="">
+          <form action="" method="get">
             <div class="row">
               <div class="col-6">
-                <input type="text" class="form-control">
-              </div>
-              <div class="col-4">
-                <select name="" id="" class="form-control">
-                  <option value="">tess</option>
-                </select>
+                <input type="text" name="k" class="form-control">
               </div>
               <div class="col-2">
                 <button class="btn btn-success">Search</button>
+              </div>
+              <div>
+                <button type="button" class="btn btn-primary mt-2 mb-3" data-bs-toggle="modal" data-bs-target="#addModal">Add Fraksi</button>
               </div>
             </div>
           </form>
@@ -134,54 +136,29 @@
               <thead>
                 <tr>
                   <th scope="col">No</th>
-                  <th scope="col">Fraksi</th>
                   <th scope="col">Nama</th>
-                  <th scope="col">Tanggal Lahir</th>
-                  <th scope="col">Umur Tahun Ini</th>
-                  <th scope="col">Tanggal daftar</th>
-                  <th scope="col">Total Vote</th>
                   <th scope="col">Aksi</th>
                 </tr>
               </thead>
               <tbody>
                 <?php $i=1;if($data): ?>
                     <?php do { ?>
-                      <?php
-                        $anggota[$i] = array(
-                          'name' => $data['name'],
-                          'total_vote' => $data['vote_all']
-                        );
-                        $vote_all += $data['vote_all'];
-                        ?>
                     <tr>
                         <th scope="row"><?= $i++ ?></th>
-                        <td><?= $data['fraksi']; ?></td>
                         <td><?= $data['name']; ?></td>
-                        <td><?= $data['birthdate']; ?></td>
-                        <td><?= date('Y') - date('Y', strtotime($data['birthdate'])) ?></td>
-                        <td><?= $data['created_at']; ?></td>
-                        <td><?= $data['vote_all']; ?></td>
                         <td>
-                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#exampleModal" data-id="<?= $data['id'] ?>" data-name="<?= $data['name'] ?>" data-birthdate="<?= $data['birthdate'] ?>">
+                            <button type="button" class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#exampleModal" data-id="<?= $data['id'] ?>" data-name="<?= $data['name'] ?>">
                                 Edit
                             </button>
-                            <a href="delete_anggota?id=<?= $data['id'] ?>" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
+                            <a href="delete_fraksi?id=<?= $data['id'] ?>" class="btn btn-danger" onclick="return confirm('Are you sure?')">Delete</a>
                         </td>
                     </tr>
                     <?php } while($data = mysqli_fetch_assoc($query)); ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="8" class="text-center">No data</td>
+                        <td colspan="5" class="text-center">No data</td>
                     </tr>
                 <?php endif ?>
-                <tr>
-                    <td colspan="2" class="text-center">
-                        Total Pendaftar yang telah di vote : <?= mysqli_num_rows($query) ?>
-                    </td>
-                    <td colspan="2" class="text-center">
-                        Total vote: <?= $vote_all ?>
-                    </td>
-                </tr>
               </tbody>
             </table>
           </div>
@@ -207,9 +184,29 @@
                             <label for="name" class="form-label">Name</label>
                             <input type="text" class="form-control" name="name" required>
                         </div>
+
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        <button type="submit" name="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+      </div>
+    <div class="modal fade" id="addModal" tabindex="-1" aria-labelledby="addModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
+            <div class="modal-content">
+                <form action="add_fraksi" method="post">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="addModalLabel">Add Fraksi</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <input type="hidden" name="id">
                         <div class="mb-3 form-group">
-                            <label for="name" class="form-label">Birth Date</label>
-                            <input type="date" class="form-control mt-2" name="birthdate" required>
+                            <label for="name" class="form-label">Name</label>
+                            <input type="text" class="form-control" name="name" required>
                         </div>
 
                     </div>
@@ -220,7 +217,7 @@
                 </form>
             </div>
         </div>
-    </div>
+      </div>
     <script>
 
       var myModal = new bootstrap.Modal(document.getElementById('exampleModal'))
@@ -229,11 +226,9 @@
         var button = event.relatedTarget
         var id = button.getAttribute('data-id')
         var name = button.getAttribute('data-name')
-        var birthdate = button.getAttribute('data-birthdate')
         var modal = $(this)
         modal.find('.modal-body input[name="id"]').val(id)
         modal.find('.modal-body input[name="name"]').val(name)
-        modal.find('.modal-body input[name="birthdate"]').val(birthdate)
       })
 
     </script>

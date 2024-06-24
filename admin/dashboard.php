@@ -5,6 +5,16 @@
     $currPage = "dashboard";
 
     include_once 'cekLogin.php';
+    include_once '../koneksi.php';
+
+    
+    $sql = "SELECT anggota.*, fraksi.name AS fraksi, COUNT(vote.id) AS vote_all FROM vote INNER JOIN anggota ON vote.id_anggota = anggota.id INNER JOIN fraksi ON anggota.fraksi_id = fraksi.id GROUP BY id_anggota ORDER BY vote_all DESC";
+    $C_anggota = mysqli_query($conn, $sql)->fetch_all(MYSQLI_ASSOC);
+    
+    $sql = "SELECT COUNT(vote.id) AS vote_all FROM vote";
+    $C_total_vote = mysqli_query($conn, $sql)->fetch_assoc();
+    $C_total_vote = $C_total_vote['vote_all'];
+
 ?>
 
 
@@ -65,8 +75,24 @@
       <div class="d-flex justify-content-between flex-wrap flex-md-nowrap align-items-center pt-3 pb-2 mb-3 border-bottom">
         <h1 class="h2">Dashboard</h1>
       </div>
-
       <h2>Selamat Datang <?= $_SESSION['name'] ?>!</h2>
+      <div class="row">
+        <?php foreach ($C_anggota as $anggota):?>
+          <div class="col-lg-4">
+            <div class="card bg-dark text-white">
+              <div class="card-body">
+                <h5 class="card-title"><?= ucwords(strtolower($anggota['name'])) ?></h5>
+                <p class="card-text">Fraksi : <?= $anggota['fraksi'] ?>
+                  <br>
+                  Vote : <?= $anggota['vote_all'] ?>
+                  <br>
+                  Persentase vote: <?= (($C_total_vote / $anggota['vote_all']) * 100) . '%'  ?>
+                </p>
+              </div>
+            </div>
+          </div>
+        <?php endforeach ?>
+      </div>
 
 
     </main>

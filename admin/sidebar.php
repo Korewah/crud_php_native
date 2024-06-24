@@ -72,6 +72,11 @@
             </a>
           </li>
           <li class="nav-item">
+            <a class="nav-link <?= ($currPage == "fraksi") ? "active" : "" ?>" aria-current="page" href="./fraksi">
+              Fraksi
+            </a>
+          </li>
+          <li class="nav-item">
             <a class="nav-link <?= ($currPage == "activity") ? "active" : "" ?>" aria-current="page" href="./activity">
               Activity
             </a>
